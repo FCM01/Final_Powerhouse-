@@ -136,7 +136,7 @@ def make_chat():
                 payload ={
                     "admin":admin,
                     "group_name":group_name,
-                    "group_memeber":[],
+                    "group_memebers":[],
                     "messages":[]
                 }
                 mongo.db.group_chats.insert_one(payload)
@@ -147,6 +147,40 @@ def make_chat():
         return jsonify(resp),status
     except Exception as e :
         print("ERROR on /Make/group_chat",e)
+
+# add member to group 
+@app.route ("/Add/memebers",methods = ["POST"])
+def add_members():
+    status  = 200 
+    resp = {}
+    try:
+        data = request.get_json("data")
+        group_name = data["data"]["group_name"]
+        memeber_array = data["data"]["member_array"]
+        if group_name != "" and memeber_array != []:
+            database_check  = mongo.db.group_chats.find({"group_name":f"{group_name}"})
+            if parse_json(database_check) != [] :
+                users_to_notify = []
+                group_array  = database_check["group_memebers"]
+                if group_array == [] :
+                    group_array = memeber_array
+                    users_to_notify = group_array
+                else:
+                    for i in memeber_array:
+                        if i not in group_array :
+                            group_array.append(i)
+                            users_to_notify.append(i)
+                    #notification client area 
+                    #return a array that will 
+                    resp  = {"message":"user/users are added to the group"}             
+
+            else:
+                status = 300
+                resp  = {"message":"group does not exsist"}
+        return jsonify(resp),status
+    except Exception as e  :
+        print("ERROR on /Add/memebers",e)
+        
 #retrieve all chats function below 
 @app.route("/Retrieve/chats",methods=["POST"])
 def retrieve_chats():
